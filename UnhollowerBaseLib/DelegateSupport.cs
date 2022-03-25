@@ -108,7 +108,7 @@ namespace UnhollowerRuntimeLib
                     : typeof(IntPtr);
             }
             
-            var trampoline = new DynamicMethod("(il2cpp delegate trampoline) " + ExtractSignature(managedMethod), MethodAttributes.Static, CallingConventions.Standard, returnType, parameterTypes, typeof(DelegateSupport), true);
+            var trampoline = new DynamicMethod("(il2cpp delegate trampoline) " + ExtractSignature(managedMethod), MethodAttributes.Public | MethodAttributes.Static, CallingConventions.Standard, returnType, parameterTypes, typeof(DelegateSupport), true);
             var bodyBuilder = trampoline.GetILGenerator();
 
             var tryLabel = bodyBuilder.BeginExceptionBlock();
@@ -189,7 +189,7 @@ namespace UnhollowerRuntimeLib
         {
             if (@delegate == null)
                 return null;
-            
+
             if(!typeof(Il2CppSystem.Delegate).IsAssignableFrom(typeof(TIl2Cpp)))
                 throw new ArgumentException($"{typeof(TIl2Cpp)} is not a delegate");
             
@@ -205,7 +205,8 @@ namespace UnhollowerRuntimeLib
                     throw new ArgumentException($"Delegate has parameter of type {parameterType} (non-blittable struct) which is not supported");
             }
 
-            var classTypePtr = Il2CppClassPointerStore<TIl2Cpp>.NativeClassPtr;
+            var field = typeof(Il2CppClassPointerStore<>).MakeGenericType(typeof(TIl2Cpp)).GetField("NativeClassPtr", BindingFlags.Static | BindingFlags.Public);
+            var classTypePtr = (IntPtr) field.GetValue(null);
             if (classTypePtr == IntPtr.Zero)
                 throw new ArgumentException($"Type {typeof(TIl2Cpp)} has uninitialized class pointer");
             

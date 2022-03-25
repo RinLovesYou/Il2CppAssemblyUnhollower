@@ -330,7 +330,9 @@ namespace UnhollowerRuntimeLib
             converted.Name = Marshal.StringToHGlobalAnsi(methodName);
             converted.Class = declaringClass.ClassPointer;
 
-            converted.InvokerMethod = Marshal.GetFunctionPointerForDelegate(new InvokerDelegate(StaticVoidIntPtrInvoker));
+            var invoker = new InvokerDelegate(StaticVoidIntPtrInvoker);
+            GCHandle.Alloc(invoker);
+            converted.InvokerMethod = Marshal.GetFunctionPointerForDelegate(invoker);
             converted.MethodPointer = Marshal.GetFunctionPointerForDelegate(voidCtor);
             converted.Slot = ushort.MaxValue;
             converted.ReturnType = (Il2CppTypeStruct*)IL2CPP.il2cpp_class_get_type(Il2CppClassPointerStore<Void>.NativeClassPtr);
@@ -491,7 +493,12 @@ namespace UnhollowerRuntimeLib
 
             body.Emit(OpCodes.Ret);
 
-            return (InvokerDelegate)method.CreateDelegate(typeof(InvokerDelegate));
+            GCHandle.Alloc(method);
+            var ret = (InvokerDelegate) method.CreateDelegate(typeof(InvokerDelegate));
+
+            GCHandle.Alloc(ret);
+
+            return ret;
         }
 
         private static IntPtr StaticVoidIntPtrInvoker(IntPtr methodPointer, Il2CppMethodInfo* methodInfo, IntPtr obj, IntPtr* args)
@@ -560,7 +567,7 @@ namespace UnhollowerRuntimeLib
             {
                 body.Emit(OpCodes.Call, typeof(IL2CPP).GetMethod(nameof(IL2CPP.Il2CppObjectBaseToPtr))!);
             }
-            body.Emit(OpCodes.Ret);
+            // body.Emit(OpCodes.Ret); //Breaks .net runtime
 
             var exceptionLocal = body.DeclareLocal(typeof(Exception));
             body.BeginCatchBlock(typeof(Exception));
@@ -749,7 +756,9 @@ namespace UnhollowerRuntimeLib
 
             if (classFromNameEntryPoint == IntPtr.Zero) return;
 
+            GCHandle.Alloc(hookedClassFromName);
             originalClassFromNameMethod = Detour.Detour(classFromNameEntryPoint, hookedClassFromName);
+            GCHandle.Alloc(originalClassFromNameMethod); //Don't GC this
             LogSupport.Trace("il2cpp_class_from_name patched");
         }
 
@@ -759,12 +768,14 @@ namespace UnhollowerRuntimeLib
             {
                 // possible race: other threads can try resolving classes after the hook is installed but before delegate field is set
                 while (originalClassFromNameMethod == null) Thread.Sleep(1);
+                
                 IntPtr intPtr = originalClassFromNameMethod.Invoke(param1, param2, param3);
 
                 if (intPtr == IntPtr.Zero)
                 {
                     string namespaze = Marshal.PtrToStringAnsi(param2);
                     string klass = Marshal.PtrToStringAnsi(param3);
+                    
                     ClassFromNameDictionary.TryGetValue((namespaze, klass, param1),out intPtr);
                 }
 

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using AssemblyUnhollower.Contexts;
@@ -36,6 +37,12 @@ namespace AssemblyUnhollower.Passes
         private static void ProcessType(AssemblyRewriteContext processedAssembly, TypeDefinition unityType,
             TypeDefinition? enclosingNewType, AssemblyKnownImports imports, ref int typesUnstripped)
         {
+            if (unityType.Name == "<Module>")
+            {
+                Console.WriteLine($"Not unstripping module type in {processedAssembly.NewAssembly.Name}");
+                return;
+            }
+
             var processedType = enclosingNewType == null ? processedAssembly.TryGetTypeByName(unityType.FullName)?.NewType : enclosingNewType.NestedTypes.SingleOrDefault(it => it.Name == unityType.Name);
             if (unityType.IsEnum)
             {
@@ -69,6 +76,7 @@ namespace AssemblyUnhollower.Passes
                 }
 
                 processedAssembly.RegisterTypeRewrite(new TypeRewriteContext(processedAssembly, null, clonedType));
+                processedType = clonedType;
             }
 
             foreach (var nestedUnityType in unityType.NestedTypes)

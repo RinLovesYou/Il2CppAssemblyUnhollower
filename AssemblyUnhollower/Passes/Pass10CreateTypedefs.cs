@@ -1,3 +1,4 @@
+using System;
 using AssemblyUnhollower.Contexts;
 using AssemblyUnhollower.Extensions;
 using Mono.Cecil;
@@ -11,7 +12,8 @@ namespace AssemblyUnhollower.Passes
             foreach (var assemblyContext in context.Assemblies)
             {
                 foreach (var type in assemblyContext.OriginalAssembly.MainModule.Types)
-                    ProcessType(type, assemblyContext, null);
+                    if(type.Namespace != "Cpp2ILInjected" && type.Name != "<Module>")
+                        ProcessType(type, assemblyContext, null);
             }
         }
 
@@ -19,6 +21,7 @@ namespace AssemblyUnhollower.Passes
         {
             var convertedTypeName = GetConvertedTypeName(assemblyContext.GlobalContext, type, parentType);
             var newType = new TypeDefinition(convertedTypeName.Namespace ?? type.Namespace.UnSystemify(assemblyContext.GlobalContext.Options), convertedTypeName.Name, AdjustAttributes(type.Attributes));
+            newType.IsSequentialLayout = false;
 
             if (type.IsSealed && type.IsAbstract) // is static
             {

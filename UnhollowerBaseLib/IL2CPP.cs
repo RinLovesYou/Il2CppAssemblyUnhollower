@@ -53,6 +53,9 @@ namespace UnhollowerBaseLib
                 LogSupport.Error($"Assembly {assemblyName} is not registered in il2cpp");
                 return IntPtr.Zero;
             }
+
+            if (namespaze == null)
+                namespaze = string.Empty;
             
             var clazz = il2cpp_class_from_name(image, namespaze, className);
             return clazz;

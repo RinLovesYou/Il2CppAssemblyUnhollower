@@ -279,8 +279,9 @@ namespace AssemblyUnhollower
             else
                 LogSupport.Warning("Not performing unstripping as unity libs are not specified");
             
-            using(new TimingCookie("Generating forwarded types"))
-                Pass89GenerateForwarders.DoPass(rewriteContext);
+            //Breaks .net runtime
+            // using(new TimingCookie("Generating forwarded types"))
+            //     Pass89GenerateForwarders.DoPass(rewriteContext);
             
             using(new TimingCookie("Writing xref cache"))
                 Pass89GenerateMethodXrefCache.DoPass(rewriteContext, options);
