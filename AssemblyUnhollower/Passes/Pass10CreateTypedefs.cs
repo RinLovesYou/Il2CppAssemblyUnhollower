@@ -63,8 +63,11 @@ namespace AssemblyUnhollower.Passes
 
                 if (assemblyContextGlobalContext.Options.RenameMap.TryGetValue(fullName + "." + convertedTypeName, out var newName))
                 {
-                    if(type.Module.Types.Any(t => t.FullName == newName))
+                    if (type.Module.Types.Any(t => t.FullName == newName))
+                    {
                         Console.WriteLine($"[Rename map issue] {newName} already exists in {type.Module.Name} (mapped from {fullName}.{convertedTypeName})");
+                        newName += "_Duplicate";
+                    }
 
                     var lastDotPosition = newName.LastIndexOf(".");
                     if (lastDotPosition >= 0)
