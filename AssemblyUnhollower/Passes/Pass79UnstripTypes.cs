@@ -38,10 +38,7 @@ namespace AssemblyUnhollower.Passes
             TypeDefinition? enclosingNewType, AssemblyKnownImports imports, ref int typesUnstripped)
         {
             if (unityType.Name == "<Module>")
-            {
-                Console.WriteLine($"Not unstripping module type in {processedAssembly.NewAssembly.Name}");
                 return;
-            }
 
             var processedType = enclosingNewType == null ? processedAssembly.TryGetTypeByName(unityType.FullName)?.NewType : enclosingNewType.NestedTypes.SingleOrDefault(it => it.Name == unityType.Name);
             if (unityType.IsEnum)

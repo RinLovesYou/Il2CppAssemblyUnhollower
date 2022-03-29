@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AssemblyUnhollower.Contexts;
 using AssemblyUnhollower.Extensions;
 using Mono.Cecil;
@@ -62,6 +63,9 @@ namespace AssemblyUnhollower.Passes
 
                 if (assemblyContextGlobalContext.Options.RenameMap.TryGetValue(fullName + "." + convertedTypeName, out var newName))
                 {
+                    if(type.Module.Types.Any(t => t.FullName == newName))
+                        Console.WriteLine($"[Rename map issue] {newName} already exists in {type.Module.Name} (mapped from {fullName}.{convertedTypeName})");
+
                     var lastDotPosition = newName.LastIndexOf(".");
                     if (lastDotPosition >= 0)
                     {
