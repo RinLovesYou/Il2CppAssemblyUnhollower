@@ -31,7 +31,7 @@ namespace UnhollowerBaseLib
             for (var i = 0; i < assembliesCount; i++)
             {
                 var image = il2cpp_assembly_get_image(assemblies[i]);
-                var name = Marshal.PtrToStringAnsi(il2cpp_image_get_name(image));
+                var name = Marshal.PtrToStringUTF8(il2cpp_image_get_name(image));
                 ourImagesMap[name] = image;
             }
         }
@@ -57,7 +57,7 @@ namespace UnhollowerBaseLib
 
             if (namespaze == null)
                 namespaze = string.Empty;
-
+            
             var clazz = il2cpp_class_from_name(image, namespaze, className);
             return clazz;
         }
@@ -68,7 +68,7 @@ namespace UnhollowerBaseLib
 
             var field = il2cpp_class_get_field_from_name(clazz, fieldName);
             if (field == IntPtr.Zero)
-                LogSupport.Error($"Field {fieldName} was not found on class {Marshal.PtrToStringAnsi(il2cpp_class_get_name(clazz))}");
+                LogSupport.Error($"Field {fieldName} was not found on class {Marshal.PtrToStringUTF8(il2cpp_class_get_name(clazz))}");
             return field;
         }
 
@@ -85,7 +85,7 @@ namespace UnhollowerBaseLib
                     return method;
             }
 
-            var className = Marshal.PtrToStringAnsi(il2cpp_class_get_name(clazz));
+            var className = Marshal.PtrToStringUTF8(il2cpp_class_get_name(clazz));
             LogSupport.Trace($"Unable to find method {className}::{token}");
 
             return NativeStructUtils.GetMethodInfoForMissingMethod(className + "::" + token);
@@ -108,7 +108,7 @@ namespace UnhollowerBaseLib
             IntPtr method;
             while ((method = il2cpp_class_get_methods(clazz, ref iter)) != IntPtr.Zero)
             {
-                if (Marshal.PtrToStringAnsi(il2cpp_method_get_name(method)) != methodName)
+                if (Marshal.PtrToStringUTF8(il2cpp_method_get_name(method)) != methodName)
                     continue;
 
                 if (il2cpp_method_get_param_count(method) != argTypes.Length)
@@ -118,7 +118,7 @@ namespace UnhollowerBaseLib
                     continue;
 
                 var returnType = il2cpp_method_get_return_type(method);
-                var returnTypeNameActual = Marshal.PtrToStringAnsi(il2cpp_type_get_name(returnType));
+                var returnTypeNameActual = Marshal.PtrToStringUTF8(il2cpp_type_get_name(returnType));
                 if (returnTypeNameActual != returnTypeName)
                     continue;
 
@@ -129,7 +129,7 @@ namespace UnhollowerBaseLib
                 for (var i = 0; i < argTypes.Length; i++)
                 {
                     var paramType = il2cpp_method_get_param(method, (uint) i);
-                    var typeName = Marshal.PtrToStringAnsi(il2cpp_type_get_name(paramType));
+                    var typeName = Marshal.PtrToStringUTF8(il2cpp_type_get_name(paramType));
                     if (typeName != argTypes[i])
                     {
                         badType = true;
@@ -142,17 +142,17 @@ namespace UnhollowerBaseLib
                 return method;
             }
 
-            var className = Marshal.PtrToStringAnsi(il2cpp_class_get_name(clazz));
+            var className = Marshal.PtrToStringUTF8(il2cpp_class_get_name(clazz));
 
             if (methodsSeen == 1)
             {
                 LogSupport.Trace($"Method {className}::{methodName} was stubbed with a random matching method of the same name");
-                LogSupport.Trace($"Stubby return type/target: {Marshal.PtrToStringAnsi(il2cpp_type_get_name(il2cpp_method_get_return_type(lastMethod)))} / {returnTypeName}");
+                LogSupport.Trace($"Stubby return type/target: {Marshal.PtrToStringUTF8(il2cpp_type_get_name(il2cpp_method_get_return_type(lastMethod)))} / {returnTypeName}");
                 LogSupport.Trace("Stubby parameter types/targets follow:");
                 for (var i = 0; i < argTypes.Length; i++)
                 {
                     var paramType = il2cpp_method_get_param(lastMethod, (uint) i);
-                    var typeName = Marshal.PtrToStringAnsi(il2cpp_type_get_name(paramType));
+                    var typeName = Marshal.PtrToStringUTF8(il2cpp_type_get_name(paramType));
                     LogSupport.Trace($"    {typeName} / {argTypes[i]}");
                 }
 
@@ -166,16 +166,16 @@ namespace UnhollowerBaseLib
             iter = IntPtr.Zero;
             while ((method = il2cpp_class_get_methods(clazz, ref iter)) != IntPtr.Zero)
             {
-                if (Marshal.PtrToStringAnsi(il2cpp_method_get_name(method)) != methodName)
+                if (Marshal.PtrToStringUTF8(il2cpp_method_get_name(method)) != methodName)
                     continue;
 
                 var nParams = il2cpp_method_get_param_count(method);
                 LogSupport.Trace("Method starts");
-                LogSupport.Trace($"     return {Marshal.PtrToStringAnsi(il2cpp_type_get_name(il2cpp_method_get_return_type(method)))}");
+                LogSupport.Trace($"     return {Marshal.PtrToStringUTF8(il2cpp_type_get_name(il2cpp_method_get_return_type(method)))}");
                 for (var i = 0; i < nParams; i++)
                 {
                     var paramType = il2cpp_method_get_param(method, (uint) i);
-                    var typeName = Marshal.PtrToStringAnsi(il2cpp_type_get_name(paramType));
+                    var typeName = Marshal.PtrToStringUTF8(il2cpp_type_get_name(paramType));
                     LogSupport.Trace($"    {typeName}");
                 }
 
@@ -228,11 +228,11 @@ namespace UnhollowerBaseLib
 
             while ((nestedTypePtr = il2cpp_class_get_nested_types(enclosingType, ref iter)) != IntPtr.Zero)
             {
-                if (Marshal.PtrToStringAnsi(il2cpp_class_get_name(nestedTypePtr)) == nestedTypeName)
+                if (Marshal.PtrToStringUTF8(il2cpp_class_get_name(nestedTypePtr)) == nestedTypeName)
                     return nestedTypePtr;
             }
 
-            LogSupport.Error($"Nested type {nestedTypeName} on {Marshal.PtrToStringAnsi(il2cpp_class_get_name(enclosingType))} not found!");
+            LogSupport.Error($"Nested type {nestedTypeName} on {Marshal.PtrToStringUTF8(il2cpp_class_get_name(enclosingType))} not found!");
 
             return IntPtr.Zero;
         }
@@ -475,7 +475,7 @@ namespace UnhollowerBaseLib
         public static extern IntPtr il2cpp_class_from_il2cpp_type(IntPtr type);
 
         [DllImport("GameAssembly", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr il2cpp_class_from_name(IntPtr image, [MarshalAs(UnmanagedType.LPStr)] string namespaze, [MarshalAs(UnmanagedType.LPStr)] string name);
+        public static extern IntPtr il2cpp_class_from_name(IntPtr image, [MarshalAs(UnmanagedType.LPUTF8Str)] string namespaze, [MarshalAs(UnmanagedType.LPUTF8Str)] string name);
 
         [DllImport("GameAssembly", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr il2cpp_class_from_system_type(IntPtr type);
@@ -502,13 +502,13 @@ namespace UnhollowerBaseLib
         public static extern IntPtr il2cpp_class_get_property_from_name(IntPtr klass, IntPtr name);
 
         [DllImport("GameAssembly", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr il2cpp_class_get_field_from_name(IntPtr klass, [MarshalAs(UnmanagedType.LPStr)] string name);
+        public static extern IntPtr il2cpp_class_get_field_from_name(IntPtr klass, [MarshalAs(UnmanagedType.LPUTF8Str)] string name);
 
         [DllImport("GameAssembly", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr il2cpp_class_get_methods(IntPtr klass, ref IntPtr iter);
 
         [DllImport("GameAssembly", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr il2cpp_class_get_method_from_name(IntPtr klass, [MarshalAs(UnmanagedType.LPStr)] string name, int argsCount);
+        public static extern IntPtr il2cpp_class_get_method_from_name(IntPtr klass, [MarshalAs(UnmanagedType.LPUTF8Str)] string name, int argsCount);
 
         [DllImport("GameAssembly", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr il2cpp_class_get_name(IntPtr klass);
